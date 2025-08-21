@@ -6,24 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import heroImage from '@/assets/palmistry-hero.jpg';
-import { Camera, Upload, Sparkles, Heart, DollarSign, Briefcase, Activity } from 'lucide-react';
+import { Camera, Upload, Sparkles, Heart, DollarSign, Briefcase, Activity, Clock, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface UserInfo {
-  name: string;
-  age: string;
-  gender: string;
-  dominantHand: string;
-  lifeAspect: string;
-}
-
-interface PalmReading {
-  lifeLine: string;
-  heartLine: string;
-  headLine: string;
-  fateLine: string;
-  overall: string;
-}
+import { UserInfo, PalmReading, HandAnalysis } from '@/types/palmistry';
+import { analyzeHandImage } from '@/lib/hand-analysis';
+import { generateAIPalmReading } from '@/lib/palmistry-ai';
 
 const PalmistryReading = () => {
   const [step, setStep] = useState<'welcome' | 'userInfo' | 'lifeAspect' | 'capture' | 'reading'>('welcome');
@@ -54,57 +41,101 @@ const PalmistryReading = () => {
     if (!handImage) return;
     
     setIsAnalyzing(true);
-    // Simulate AI analysis with realistic palmistry reading
-    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    const age = parseInt(userInfo.age);
-    const readings = generatePalmReading(userInfo, age);
-    setReading(readings);
-    setStep('reading');
+    try {
+      // Create image element for analysis
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = handImage;
+      });
+      
+      // Analyze hand features using computer vision
+      const handAnalysis = await analyzeHandImage(img);
+      
+      // Generate AI-powered reading
+      const aiReading = await generateAIPalmReading({
+        userInfo,
+        handAnalysis,
+        timestamp: Date.now()
+      });
+      
+      setReading(aiReading);
+      setStep('reading');
+      
+      toast({
+        title: "လက္ခဏာဖတ်ပြီးပါပြီ!",
+        description: "AI ဆန်းစစ်ချက် အပြီးသတ်ပါပြီ",
+      });
+      
+    } catch (error) {
+      console.error('Hand analysis failed:', error);
+      
+      // Fallback to basic reading
+      const fallbackReading = await generateBasicReading();
+      setReading(fallbackReading);
+      setStep('reading');
+      
+      toast({
+        title: "လက္ခဏာဖတ်ပြီးပါပြီ!",
+        description: "ပုံမှန် ဆန်းစစ်ချက် အသုံးပြုထားပါသည်",
+        variant: "default"
+      });
+    }
+    
     setIsAnalyzing(false);
   };
 
-  const generatePalmReading = (info: UserInfo, age: number): PalmReading => {
-    // Generate readings based on selected life aspect
+  const generateBasicReading = async (): Promise<PalmReading> => {
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const age = parseInt(userInfo.age);
     const aspectReadings = {
       business: {
-        lifeLine: age < 30 
-          ? "လုပ်ငန်းခွင်မှာ အခွင့်အလမ်းကောင်းတွေ လာရောက်မယ်"
-          : "စီးပွားရေးမှာ တည်ငြိမ်မှုနဲ့ အောင်မြင်မှု ရရှိမယ်",
-        heartLine: "လုပ်ငန်းခွင်က လူတွေနဲ့ ကောင်းမွန်တဲ့ ဆက်ဆံရေး ရှိမယ်",
-        headLine: "စီးပွားရေး ဆုံးဖြတ်ချက်တွေမှာ လိမ္မာပါးနပ်မှု ရှိမယ်",
-        fateLine: "ကြိုးစားမှုတွေက စီးပွားရေး အောင်မြင်မှု ယူဆောင်လာမယ်"
+        lifeLine: age < 30 ? "စီးပွားရေးမှာ အခွင့်အလမ်းကောင်းတွေ ရရှိမယ်" : "လုပ်ငန်း တည်ငြိမ်မှုနဲ့ အောင်မြင်မှု ရှိမယ်",
+        heartLine: "စီးပွားရေး မိတ်ဖက်တွေနဲ့ ယုံကြည်မှုရှိမယ်",
+        headLine: "လုပ်ငန်း ဆုံးဖြတ်ချက်တွေမှာ ပညာရှိမှု ရှိမယ်",
+        fateLine: "ကြိုးစားမှုတွေက စီးပွားရေး အောင်မြင်မှု ယူဆောင်လာမယ်",
+        timeframe: "လာမယ့် ၆ လအတွင်း စီးပွားရေး အပြောင်းအလဲ ကောင်းတွေ ရှိမယ်",
+        advice: "လုပ်ငန်းမှာ သေချာမှုနဲ့ ဆုံးဖြတ်ပြီး အရင်းအမြစ် စုဆောင်းပါ"
       },
       education: {
-        lifeLine: "ပညာသင်ကြားမှုမှာ အောင်မြင်မှုတွေ ရရှိမယ်",
-        heartLine: "ပညာရေးလမ်းမှာ ကူညီပေးမယ့်သူတွေ တွေ့ရမယ်",
-        headLine: "သင်ယူလိုစိတ်အားတက်ပြီး အဆင့်မြင့် ပညာရပ်တွေ သိရှိနိုင်မယ်",
-        fateLine: "ပညာရေးက သင့်ကို ပိုမိုကောင်းမွန်တဲ့ အနာဂတ်ဆီ ပို့ဆောင်မယ်"
+        lifeLine: "ပညာရေးမှာ အောင်မြင်မှုတွေ ရရှိမယ်",
+        heartLine: "ဆရာများနဲ့ မိတ်ဆွေများမှ အကူအညီ ရရှိမယ်", 
+        headLine: "သင်ယူနိုင်စွမ်း မြင့်မားပြီး ဗဟုသုတ ကျယ်ပြန့်မယ်",
+        fateLine: "ပညာရေးက အနာဂတ် အောင်မြင်မှု ဖန်တီးပေးမယ်",
+        timeframe: "လာမယ့် ၃ လအတွင်း ပညာရေး ပိုမို တိုးတက်မယ်",
+        advice: "နေ့စဉ် သင်ယူမှုကို ပုံမှန်လုပ်ပြီး စိတ်ရှည်သီးခံပါ"
       },
       health: {
-        lifeLine: "ကျန်းမာရေးကောင်းမွန်ပြီး ရောဂါကင်းရေး ရှိမယ်",
-        heartLine: "စိတ်ကျန်းမာရေးနဲ့ ခံစားချက်တွေ တည်ငြိမ်မယ်",
-        headLine: "ကျန်းမာရေး စောင့်ရှောက်မှုမှာ ဉာဏ်ရှိရှိ ဆုံးဖြတ်နိုင်မယ်",
-        fateLine: "ကျန်းမာရေး ရေရှည်အတွက် ကောင်းမွန်တဲ့ အလေ့အကျင့်တွေ ရှိမယ်"
+        lifeLine: "ကျန်းမာရေး ကောင်းမွန်ပြီး ရောဂါကင်းမယ်",
+        heartLine: "စိတ်ကျန်းမာရေး တည်ငြိမ်မယ်",
+        headLine: "ကျန်းမာရေး စောင့်ရှောက်မှုမှာ ပညာရှိမှုရှိမယ်",
+        fateLine: "ကျန်းမာရေး ရေရှည် ကောင်းမွန်မယ်",
+        timeframe: "လာမယ့် ၂ လအတွင်း ကျန်းမာရေး သိသာစွာ ကောင်းလာမယ်",
+        advice: "နေ့စဉ် ကာယကံ့ခိုင်ရေးလုပ်ပြီး စိတ်ဖိစီးမှု လျှော့ချပါ"
       },
       love: {
-        lifeLine: info.gender === 'female'
-          ? "အချစ်ရေးမှာ စစ်မှန်တဲ့ ခံစားမှုတွေ ရရှိမယ်"
-          : "ဇနီးမောင်နှံ ဆက်ဆံရေးမှာ ပျော်ရွှင်မှု ရှိမယ်",
-        heartLine: "နှလုံးသားရဲ့ အမှန်တကယ် လိုချင်တာကို တွေ့ရမယ်",
-        headLine: "အချစ်ရေး ဆုံးဖြတ်ချက်တွေမှာ ပညာရှိရှိ သုံးသပ်နိုင်မယ်",
-        fateLine: "အချစ်ရေးက သင့်ဘဝကို ပိုမို ပြည့်စုံစေမယ်"
+        lifeLine: userInfo.gender === 'female' ? "အချစ်ရေးမှာ ခံစားမှု ပြည့်ဝမယ်" : "ဇနီးမောင်နှံ ဆက်ဆံရေး ကောင်းမယ်",
+        heartLine: "နှလုံးသား လိုချင်တာကို တွေ့ရမယ်",
+        headLine: "အချစ်ရေး ဆုံးဖြတ်ချက်တွေ ပညာရှိမယ်", 
+        fateLine: "အချစ်ရေးက ဘဝကို ပိုမို ပြည့်စုံစေမယ်",
+        timeframe: age < 30 ? "လာမယ့် ၄ လအတွင်း အချစ်ရေး အပြောင်းအလဲ ရှိမယ်" : "လာမယ့် ၆ လအတွင်း မိသားစု ပျော်ရွှင်မှု ရှိမယ်",
+        advice: "အချစ်ရေးမှာ ရိုးသားမှု ထားပြီး စိတ်ခံစားမှုတွေ ပွင့်လင်းစွာ ဖော်ပြပါ"
       }
     };
-
-    const selectedReadings = aspectReadings[info.lifeAspect as keyof typeof aspectReadings] || aspectReadings.business;
+    
+    const selectedReadings = aspectReadings[userInfo.lifeAspect as keyof typeof aspectReadings] || aspectReadings.business;
     
     return {
-      lifeLine: selectedReadings.lifeLine,
-      heartLine: selectedReadings.heartLine,
-      headLine: selectedReadings.headLine,
-      fateLine: selectedReadings.fateLine,
-      overall: `${info.name}ရဲ့ လက်ဝါးမှာ ${getAspectName(info.lifeAspect)} နဲ့ ပတ်သက်ပြီး ကောင်းမွန်တဲ့ လက္ခဏာတွေ တွေ့ရတယ်။ အသက် ${age} နှစ်မှာ သင့်အတွက် အရေးကြီးတဲ့ အချိန်ကာလ ရောက်နေပြီ။`
+      ...selectedReadings,
+      overall: `${userInfo.name}ရဲ့ လက်ဝါးမှာ ${getAspectName(userInfo.lifeAspect)}နဲ့ ပတ်သက်ပြီး ကောင်းမွန်တဲ့ လက္ခဏာတွေ တွေ့ရတယ်။ အသက် ${age} နှစ်မှာ သင့်အတွက် အရေးကြီးတဲ့ အချိန်ကာလ ရောက်နေပြီ။`,
+      luckyNumbers: [Math.floor(Math.random() * 9) + 1, Math.floor(Math.random() * 9) + 1, Math.floor(Math.random() * 9) + 1],
+      luckyColors: ['ရွှေရောင်', 'အပြာရောင်']
     };
   };
 
@@ -396,7 +427,7 @@ const PalmistryReading = () => {
                     {isAnalyzing ? (
                       <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
-                        ဆန်းစစ်နေ...
+                        AI ဆန်းစစ်နေ...
                       </div>
                     ) : (
                       <>
@@ -424,7 +455,7 @@ const PalmistryReading = () => {
                 {userInfo.name}ရဲ့ လက္ခဏာဖတ်ချက်
               </CardTitle>
               <CardDescription className="text-lg">
-                မြန်မာ့ ရှေးရိုးဗေဒင်ပညာအရ ဟောကြားချက်
+                AI ပေါင်းစပ် မြန်မာ့ဗေဒင်ပညာ ဟောကြားချက်
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -433,6 +464,56 @@ const PalmistryReading = () => {
                   {reading.overall}
                 </p>
               </div>
+              
+              {/* Timeframe and Advice */}
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-accent/10 rounded-lg">
+                  <div className="flex items-center mb-3">
+                    <Clock className="w-5 h-5 mr-2 text-accent" />
+                    <h4 className="font-semibold text-foreground">အချိန်ကာလ</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{reading.timeframe}</p>
+                </div>
+                
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <div className="flex items-center mb-3">
+                    <Lightbulb className="w-5 h-5 mr-2 text-primary" />
+                    <h4 className="font-semibold text-foreground">အကြံပြုချက်</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{reading.advice}</p>
+                </div>
+              </div>
+
+              {/* Lucky Elements */}
+              {(reading.luckyNumbers || reading.luckyColors) && (
+                <div className="flex flex-wrap gap-4 justify-center mb-6">
+                  {reading.luckyNumbers && (
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">ကံကောင်းဂဏန်းများ</p>
+                      <div className="flex gap-2">
+                        {reading.luckyNumbers.map((num, idx) => (
+                          <Badge key={idx} className="bg-golden text-primary-foreground">
+                            {num}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {reading.luckyColors && (
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">ကံကောင်းရောင်များ</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {reading.luckyColors.map((color, idx) => (
+                          <Badge key={idx} variant="outline" className="text-accent border-accent">
+                            {color}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
