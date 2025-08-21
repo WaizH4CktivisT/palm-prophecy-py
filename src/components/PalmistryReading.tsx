@@ -14,6 +14,7 @@ interface UserInfo {
   age: string;
   gender: string;
   dominantHand: string;
+  lifeAspect: string;
 }
 
 interface PalmReading {
@@ -25,12 +26,13 @@ interface PalmReading {
 }
 
 const PalmistryReading = () => {
-  const [step, setStep] = useState<'welcome' | 'userInfo' | 'capture' | 'reading'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'userInfo' | 'lifeAspect' | 'capture' | 'reading'>('welcome');
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: '',
     age: '',
     gender: '',
-    dominantHand: ''
+    dominantHand: '',
+    lifeAspect: ''
   });
   const [handImage, setHandImage] = useState<string | null>(null);
   const [reading, setReading] = useState<PalmReading | null>(null);
@@ -63,26 +65,57 @@ const PalmistryReading = () => {
   };
 
   const generatePalmReading = (info: UserInfo, age: number): PalmReading => {
-    // Generate contextual readings based on age and gender
-    const lifeLineReadings = age < 25 
-      ? ["သင့်အသက်တာမှာ ကျန်းမာရေးကောင်းမွန်ပြီး စွမ်းအင်ပြည့်ဝမယ်", "အသက်ရှည်ကြီးပြင်းမယ့် လက္ခဏာရှိတယ်"]
-      : age < 50 
-      ? ["အလုပ်အကိုင်နဲ့ ကျန်းမာရေးကို ဟန်ချက်ညီညွတ်အောင်လုပ်ရမယ်", "အနာဂတ် ၁၀ နှစ်အတွင်း အရေးကြီးတဲ့ ပြောင်းလဲမှုတွေ ရှိလာမယ်"]
-      : ["ဘဝအတွေ့အကြုံတွေက သင့်ကို ပိုပြီး အားကောင်းစေမယ်", "နောက်ပိုင်း ဘဝမှာ ငြိမ်းချမ်းမှုနဲ့ ပျော်ရွှင်မှု ရရှိမယ်"];
-
-    const heartLineReadings = info.gender === 'female'
-      ? ["အချစ်ရေးမှာ စစ်မှန်တဲ့ချစ်ခြင်မေတ္တာ ရရှိမယ်", "မိသားစုနဲ့ ခင်မင်ရင်းနှီးမှု အမြဲရှိမယ်", "စိတ်နှလုံးသားကြေးမုံပြီး နားလည်မှု ရှိတဲ့သူ"]
-      : ["ခင်မင်ရင်းနှီးသူတွေနဲ့ ရေရှည်ဆက်ဆံရေး ရှိမယ်", "အချစ်ရေးမှာ တည်ငြိမ်မှုရှိမယ်", "မိသားစုအတွက် စာနာတတ်တဲ့သူ"];
-
-    return {
-      lifeLine: lifeLineReadings[Math.floor(Math.random() * lifeLineReadings.length)],
-      heartLine: heartLineReadings[Math.floor(Math.random() * heartLineReadings.length)],
-      headLine: age < 30 
-        ? "ဉာဏ်ရည်ထက်မြက်ပြီး သင်ယူလိုစိတ် အပြည့်အဝရှိတယ်" 
-        : "အတွေ့အကြုံတွေက သင့်ကို ပညာရှင်တစ်ယောက်အဖြစ် ပြောင်းလဲစေတယ်",
-      fateLine: "ကံကြမ္မာကောင်းပြီး ကြိုးစားမှုတွေ အပြီးသတ်မယ်",
-      overall: `${info.name}ရဲ့ လက်ဝါးမှာ ကောင်းမွန်တဲ့ အနာဂတ်လက္ခဏာတွေ အများကြီးတွေ့ရတယ်။ ယခုအသက် ${age} နှစ်မှာ သင့်ရဲ့ ဘဝခရီးမှာ အရေးကြီးတဲ့ အခြေအနေတွေ ရောက်နေပြီ။`
+    // Generate readings based on selected life aspect
+    const aspectReadings = {
+      business: {
+        lifeLine: age < 30 
+          ? "လုပ်ငန်းခွင်မှာ အခွင့်အလမ်းကောင်းတွေ လာရောက်မယ်"
+          : "စီးပွားရေးမှာ တည်ငြိမ်မှုနဲ့ အောင်မြင်မှု ရရှိမယ်",
+        heartLine: "လုပ်ငန်းခွင်က လူတွေနဲ့ ကောင်းမွန်တဲ့ ဆက်ဆံရေး ရှိမယ်",
+        headLine: "စီးပွားရေး ဆုံးဖြတ်ချက်တွေမှာ လိမ္မာပါးနပ်မှု ရှိမယ်",
+        fateLine: "ကြိုးစားမှုတွေက စီးပွားရေး အောင်မြင်မှု ယူဆောင်လာမယ်"
+      },
+      education: {
+        lifeLine: "ပညာသင်ကြားမှုမှာ အောင်မြင်မှုတွေ ရရှိမယ်",
+        heartLine: "ပညာရေးလမ်းမှာ ကူညီပေးမယ့်သူတွေ တွေ့ရမယ်",
+        headLine: "သင်ယူလိုစိတ်အားတက်ပြီး အဆင့်မြင့် ပညာရပ်တွေ သိရှိနိုင်မယ်",
+        fateLine: "ပညာရေးက သင့်ကို ပိုမိုကောင်းမွန်တဲ့ အနာဂတ်ဆီ ပို့ဆောင်မယ်"
+      },
+      health: {
+        lifeLine: "ကျန်းမာရေးကောင်းမွန်ပြီး ရောဂါကင်းရေး ရှိမယ်",
+        heartLine: "စိတ်ကျန်းမာရေးနဲ့ ခံစားချက်တွေ တည်ငြိမ်မယ်",
+        headLine: "ကျန်းမာရေး စောင့်ရှောက်မှုမှာ ဉာဏ်ရှိရှိ ဆုံးဖြတ်နိုင်မယ်",
+        fateLine: "ကျန်းမာရေး ရေရှည်အတွက် ကောင်းမွန်တဲ့ အလေ့အကျင့်တွေ ရှိမယ်"
+      },
+      love: {
+        lifeLine: info.gender === 'female'
+          ? "အချစ်ရေးမှာ စစ်မှန်တဲ့ ခံစားမှုတွေ ရရှိမယ်"
+          : "ဇနီးမောင်နှံ ဆက်ဆံရေးမှာ ပျော်ရွှင်မှု ရှိမယ်",
+        heartLine: "နှလုံးသားရဲ့ အမှန်တကယ် လိုချင်တာကို တွေ့ရမယ်",
+        headLine: "အချစ်ရေး ဆုံးဖြတ်ချက်တွေမှာ ပညာရှိရှိ သုံးသပ်နိုင်မယ်",
+        fateLine: "အချစ်ရေးက သင့်ဘဝကို ပိုမို ပြည့်စုံစေမယ်"
+      }
     };
+
+    const selectedReadings = aspectReadings[info.lifeAspect as keyof typeof aspectReadings] || aspectReadings.business;
+    
+    return {
+      lifeLine: selectedReadings.lifeLine,
+      heartLine: selectedReadings.heartLine,
+      headLine: selectedReadings.headLine,
+      fateLine: selectedReadings.fateLine,
+      overall: `${info.name}ရဲ့ လက်ဝါးမှာ ${getAspectName(info.lifeAspect)} နဲ့ ပတ်သက်ပြီး ကောင်းမွန်တဲ့ လက္ခဏာတွေ တွေ့ရတယ်။ အသက် ${age} နှစ်မှာ သင့်အတွက် အရေးကြီးတဲ့ အချိန်ကာလ ရောက်နေပြီ။`
+    };
+  };
+
+  const getAspectName = (aspect: string) => {
+    const names = {
+      business: 'စီးပွားရေး',
+      education: 'ပညာရေး', 
+      health: 'ကျန်းမာရေး',
+      love: 'အချစ်ရေး'
+    };
+    return names[aspect as keyof typeof names] || 'ဘဝ';
   };
 
   if (step === 'welcome') {
@@ -199,11 +232,91 @@ const PalmistryReading = () => {
               </Select>
             </div>
             <Button 
-              onClick={() => setStep('capture')} 
+              onClick={() => setStep('lifeAspect')} 
               disabled={!userInfo.name || !userInfo.age || !userInfo.gender || !userInfo.dominantHand}
               className="w-full bg-golden hover:bg-primary/90 text-primary-foreground font-medium py-3 shadow-golden"
             >
               နောက်တစ်ဆင့်သွားမယ်
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 'lifeAspect') {
+    return (
+      <div className="min-h-screen bg-mystical flex items-center justify-center p-4">
+        <Card className="max-w-md w-full bg-card-gradient border-primary/20 shadow-mystical">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-primary">ဘယ်အရာကို သိချင်လဲ?</CardTitle>
+            <CardDescription>
+              သင်သိချင်တဲ့ ဘဝရဲ့ ကဏ္ဍကို ရွေးပါ
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setUserInfo(prev => ({...prev, lifeAspect: 'business'}))}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  userInfo.lifeAspect === 'business' 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <Briefcase className="w-8 h-8 mx-auto mb-2 text-accent" />
+                <p className="font-medium text-foreground">စီးပွားရေး</p>
+                <p className="text-xs text-muted-foreground">အလုပ်အကိုင်</p>
+              </button>
+              
+              <button
+                onClick={() => setUserInfo(prev => ({...prev, lifeAspect: 'education'}))}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  userInfo.lifeAspect === 'education' 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="w-8 h-8 mx-auto mb-2 text-accent flex items-center justify-center">
+                  📚
+                </div>
+                <p className="font-medium text-foreground">ပညာရေး</p>
+                <p className="text-xs text-muted-foreground">ပညာသင်ကြား</p>
+              </button>
+              
+              <button
+                onClick={() => setUserInfo(prev => ({...prev, lifeAspect: 'health'}))}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  userInfo.lifeAspect === 'health' 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <Activity className="w-8 h-8 mx-auto mb-2 text-accent" />
+                <p className="font-medium text-foreground">ကျန်းမာရေး</p>
+                <p className="text-xs text-muted-foreground">ရောဂါကင်းရေး</p>
+              </button>
+              
+              <button
+                onClick={() => setUserInfo(prev => ({...prev, lifeAspect: 'love'}))}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  userInfo.lifeAspect === 'love' 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <Heart className="w-8 h-8 mx-auto mb-2 text-accent" />
+                <p className="font-medium text-foreground">အချစ်ရေး</p>
+                <p className="text-xs text-muted-foreground">ခွန်းခြင်မေတ္တာ</p>
+              </button>
+            </div>
+            
+            <Button 
+              onClick={() => setStep('capture')} 
+              disabled={!userInfo.lifeAspect}
+              className="w-full bg-golden hover:bg-primary/90 text-primary-foreground font-medium py-3 shadow-golden"
+            >
+              လက်ဝါးဓာတ်ပုံ ရိုက်မယ်
             </Button>
           </CardContent>
         </Card>
@@ -377,7 +490,7 @@ const PalmistryReading = () => {
             <Button 
               onClick={() => {
                 setStep('welcome');
-                setUserInfo({name: '', age: '', gender: '', dominantHand: ''});
+                setUserInfo({name: '', age: '', gender: '', dominantHand: '', lifeAspect: ''});
                 setHandImage(null);
                 setReading(null);
               }}
