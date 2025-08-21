@@ -63,10 +63,23 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			backgroundImage: {
+				'mystical': 'var(--gradient-mystical)',
+				'card-gradient': 'var(--gradient-card)',
+				'golden': 'var(--gradient-golden)'
+			},
+			boxShadow: {
+				'mystical': 'var(--shadow-mystical)',
+				'golden': 'var(--shadow-golden)',
+				'card': 'var(--shadow-card)'
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			transitionProperty: {
+				'mystical': 'var(--transition-mystical)'
 			},
 			keyframes: {
 				'accordion-down': {
